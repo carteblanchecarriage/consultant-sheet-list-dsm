@@ -14,16 +14,19 @@ NOISE_RE = re.compile(
 )
 
 DISCIPLINE_MAP = {
-    'S':  ('STRUCTURAL',          300), 'SD': ('STRUCTURAL',          300),
-    'SS': ('STRUCTURAL',          300),
-    'C':  ('CIVIL',               200), 'L':  ('LANDSCAPE',           150),
-    'I':  ('INTERIORS',           250),
-    'P':  ('PLUMBING',            400), 'MP': ('MECHANICAL PLUMBING',  450),
-    'M':  ('MECHANICAL',          500), 'H':  ('HVAC',                520),
-    'E':  ('ELECTRICAL',          600), 'EP': ('ELECTRICAL POWER',    620),
-    'FP': ('FIRE PROTECTION',     700), 'FA': ('FIRE ALARM',          710),
-    'SP': ('FIRE SUPPRESSION',    720),
-    'T':  ('TECHNOLOGY',          800), 'IT': ('TECHNOLOGY',          800),
+    'IX': ('INDEX',                      1),
+    'G':  ('GENERAL INFORMATION',        2),
+    'C':  ('CIVIL',                      3),
+    'L':  ('LANDSCAPE',                  4),
+    'S':  ('STRUCTURAL',                 5),
+    'AD': ('ARCHITECTURAL DEMOLITION',   6.1),
+    'A':  ('ARCHITECTURAL',              6.2),
+    'ID': ('INTERIORS',                  7),
+    'EQ': ('EQUIPMENT',                  8),
+    'FP': ('FIRE PROTECTION',            9),
+    'P':  ('PLUMBING',                   10),
+    'M':  ('MECHANICAL',                 11),
+    'E':  ('ELECTRICAL',                 12),
 }
 
 AUTO_REGIONS = [
@@ -40,11 +43,8 @@ def resolve_params(num):
         (k for k in sorted(DISCIPLINE_MAP, key=len, reverse=True) if prefix == k),
         None
     )
-    discipline, major = DISCIPLINE_MAP.get(key, ('CONSULTANT', 900))
-    n_match = re.search(r'\d+', num)
-    n = int(n_match.group()) if n_match else 0
-    minor = major + (10 if n < 100 else 20 if n < 500 else 30)
-    return discipline, major, minor
+    discipline, major = DISCIPLINE_MAP.get(key, ('CONSULTANT', 999))
+    return discipline, major
 
 
 def words_in_rect(page, rect):
@@ -127,13 +127,12 @@ def extract_sheets(pdf_bytes, number_region=None, title_region=None):
             title = ' '.join(candidates[:3]).strip()
 
         seen.add(num)
-        discipline, major, minor = resolve_params(num)
+        discipline, major = resolve_params(num)
         results.append({
             'number':      num,
             'title':       title,
             'discipline':  discipline,
             'order_major': major,
-            'order_minor': minor,
         })
 
     doc.close()
