@@ -6,8 +6,8 @@
 # ViewSheet elements — the schedule is populated automatically as sheets exist.
 
 from Autodesk.Revit.DB import (
-    FilteredElementCollector, ViewSheet, ViewSchedule,
-    Transaction, ElementId, BuiltInCategory
+    FilteredElementCollector, ViewSheet,
+    Transaction, ElementId
 )
 import clr
 clr.AddReference('System')
@@ -22,7 +22,7 @@ output = script.get_output()
 
 
 # -- Step 1: How to get the CSV ------------------------------------------------
-SHEET_LIST_URL = 'https://consultant-sheet-list.vercel.app/sheet-list-updater.html'
+SHEET_LIST_URL = 'https://consultant-sheet-list-dsm.vercel.app/sheet-list-updater.html'
 
 choice = forms.CommandSwitchWindow.show(
     ['Generate from PDF', 'Browse for CSV'],
@@ -71,7 +71,7 @@ else:
 
 
 # -- Step 2: Read CSV ----------------------------------------------------------
-# Expected columns: NUMBER, SHEET NAME, DISCIPLINE, ORDER-MAJOR, ORDER-MINOR
+# Expected columns: NUMBER, SHEET NAME, DISCIPLINE, ORDER-MAJOR
 csv_rows = []
 with csv_source as f:
     reader = csv.DictReader(f)
@@ -80,18 +80,17 @@ with csv_source as f:
         title = (row.get('SHEET NAME')  or '').strip()
         disc  = (row.get('DISCIPLINE')  or '').strip()
         major = (row.get('ORDER-MAJOR') or '').strip()
-        minor = (row.get('ORDER-MINOR') or '').strip()
         if not num or not title:
             continue
         try:
             csv_rows.append({
                 'number': num, 'title': title, 'discipline': disc,
-                'major': int(major), 'minor': int(minor)
+                'major': float(major)
             })
         except ValueError:
             csv_rows.append({
                 'number': num, 'title': title, 'discipline': disc,
-                'major': 0, 'minor': 0
+                'major': 0.0
             })
 
 if not csv_rows:
@@ -103,7 +102,6 @@ if not csv_rows:
 all_sheets   = FilteredElementCollector(doc).OfClass(ViewSheet).ToElements()
 model_sheets = {s.SheetNumber: s for s in all_sheets}
 
-csv_map  = {r['number']: r for r in csv_rows}
 to_add   = [r for r in csv_rows if r['number'] not in model_sheets]
 to_update = [r for r in csv_rows if r['number'] in model_sheets
              and model_sheets[r['number']].Name != r['title']]
@@ -133,11 +131,9 @@ if not confirmed:
 # -- Step 5: Apply -------------------------------------------------------------
 def set_params(sheet, data):
     p_disc  = sheet.LookupParameter('DISCIPLINE')
-    p_major = sheet.LookupParameter('ORDER-MAJOR')
-    p_minor = sheet.LookupParameter('ORDER-MINOR')
+    p_major = sheet.LookupParameter('Sheet Sort')
     if p_disc:  p_disc.Set(data['discipline'])
     if p_major: p_major.Set(data['major'])
-    if p_minor: p_minor.Set(data['minor'])
 
 
 with Transaction(doc, 'Import Consultant Sheet List') as t:
