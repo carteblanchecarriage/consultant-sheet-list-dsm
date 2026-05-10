@@ -898,7 +898,6 @@
                 <p class="drop-zone-label">
                   Drop a consultant PDF or CSV here, or
                   <strong id="browseBtn">browse</strong>
-                  <strong id="csvBrowseBtn">import CSV</strong>
                 </p>
                 <p class="drop-zone-sub">
                   Extracted client-side · no upload, no size limit
@@ -1002,6 +1001,8 @@
                       >
                         Sheet Sort &#x25B5;
                       </th>
+                      <th style="width: 120px">Project Progress</th>
+                      <th style="width: 180px">PROJECT PROGRESS - CURRENT DATE</th>
                       <th style="width: 32px"></th>
                     </tr>
                   </thead>
@@ -1560,6 +1561,7 @@
             row['SHEET SORT NUMBER'] ||
             row['SHEET SORT'] ||
             '';
+          const progress = row['PROJECT PROGRESS'] || row['Project Progress'] || '';
 
           addRow(
             num,
@@ -1567,6 +1569,7 @@
             null,
             discipline || null,
             major ? parseFloat(major) : null,
+            progress || null,
           );
         });
         parsedCount.textContent = sheetBody.rows.length + ' sheets imported';
@@ -2088,6 +2091,7 @@
         pdfIndex = null,
         discipline = null,
         major = null,
+        progress = null,
       ) {
         const p = resolveParams(num, pdfIndex);
         if (
@@ -2104,12 +2108,16 @@
         ) {
           p.major = String(major).trim();
         }
+        const today = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        const progressVal = (progress !== null && progress !== undefined && String(progress).trim() !== '') ? String(progress).trim() : today;
         const tr = document.createElement('tr');
         tr.innerHTML = `
         <td><input class="cell-input" value="${esc(num)}" placeholder="E-101"></td>
         <td><input class="cell-input" value="${esc(title)}" placeholder="Sheet title"></td>
         <td><input class="cell-input" value="${esc(p.discipline)}"></td>
         <td><input class="cell-input" value="${esc(p.major)}"></td>
+        <td><input class="cell-input" value="${esc(progressVal)}"></td>
+        <td><input class="cell-input" value="X"></td>
         <td class="row-del" title="Remove row">×</td>`;
         // Re-resolve discipline when sheet number is edited
         tr.querySelector('input').addEventListener('change', function () {
@@ -2278,10 +2286,12 @@
             q(inputs[1].value),
             q(inputs[2].value),
             inputs[3].value.trim(),
+            q(inputs[4].value),
+            q(inputs[5].value),
           ].join(',');
         });
         const csv =
-          'NUMBER,SHEET NAME,DISCIPLINE,ORDER-MAJOR\n' +
+          'NUMBER,SHEET NAME,DISCIPLINE,ORDER-MAJOR,PROJECT PROGRESS,PROJECT PROGRESS - CURRENT DATE\n' +
           rows.join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');

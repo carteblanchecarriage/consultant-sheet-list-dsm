@@ -71,26 +71,29 @@ else:
 
 
 # -- Step 2: Read CSV ----------------------------------------------------------
-# Expected columns: NUMBER, SHEET NAME, DISCIPLINE, ORDER-MAJOR
+# Expected columns: NUMBER, SHEET NAME, DISCIPLINE, ORDER-MAJOR,
+#                   PROJECT PROGRESS, PROJECT PROGRESS - CURRENT DATE
 csv_rows = []
 with csv_source as f:
     reader = csv.DictReader(f)
     for row in reader:
-        num   = (row.get('NUMBER')      or '').strip()
-        title = (row.get('SHEET NAME')  or '').strip()
-        disc  = (row.get('DISCIPLINE')  or '').strip()
-        major = (row.get('ORDER-MAJOR') or '').strip()
+        num      = (row.get('NUMBER')                           or '').strip()
+        title    = (row.get('SHEET NAME')                       or '').strip()
+        disc     = (row.get('DISCIPLINE')                       or '').strip()
+        major    = (row.get('ORDER-MAJOR')                      or '').strip()
+        progress = (row.get('PROJECT PROGRESS')                 or '').strip()
+        current  = (row.get('PROJECT PROGRESS - CURRENT DATE')  or '').strip()
         if not num or not title:
             continue
         try:
             csv_rows.append({
                 'number': num, 'title': title, 'discipline': disc,
-                'major': float(major)
+                'major': float(major), 'progress': progress, 'current': current
             })
         except ValueError:
             csv_rows.append({
                 'number': num, 'title': title, 'discipline': disc,
-                'major': 0.0
+                'major': 0.0, 'progress': progress, 'current': current
             })
 
 if not csv_rows:
@@ -130,10 +133,14 @@ if not confirmed:
 
 # -- Step 5: Apply -------------------------------------------------------------
 def set_params(sheet, data):
-    p_disc  = sheet.LookupParameter('DISCIPLINE')
-    p_major = sheet.LookupParameter('Sheet Sort')
-    if p_disc:  p_disc.Set(data['discipline'])
-    if p_major: p_major.Set(data['major'])
+    p_disc     = sheet.LookupParameter('DISCIPLINE')
+    p_major    = sheet.LookupParameter('Sheet Sort')
+    p_progress = sheet.LookupParameter('PROJECT PROGRESS')
+    p_current  = sheet.LookupParameter('PROJECT PROGRESS - CURRENT DATE')
+    if p_disc:     p_disc.Set(data['discipline'])
+    if p_major:    p_major.Set(data['major'])
+    if p_progress and data['progress']: p_progress.Set(data['progress'])
+    if p_current  and data['current']:  p_current.Set(data['current'])
 
 
 with Transaction(doc, 'Import Consultant Sheet List') as t:
