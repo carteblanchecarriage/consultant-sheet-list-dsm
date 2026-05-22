@@ -156,6 +156,13 @@
         .page-grid {
           grid-template-columns: 1fr;
         }
+        .sidebar {
+          position: static;
+          order: 2;
+        }
+        .content-wrap {
+          order: 1;
+        }
       }
       .content-wrap {
         display: flex;
@@ -896,7 +903,7 @@
 
               <div class="drop-zone" id="dropZone">
                 <p class="drop-zone-label">
-                  Drop a consultant PDF or CSV here, or
+                  Drop a consultant PDF here, or
                   <strong id="browseBtn">browse</strong>
                 </p>
                 <p class="drop-zone-sub">
@@ -1213,7 +1220,6 @@
       const fileInput = document.getElementById('fileInput');
       const csvInput = document.getElementById('csvInput');
       const browseBtn = document.getElementById('browseBtn');
-      const csvBrowseBtn = document.getElementById('csvBrowseBtn');
       const toolStatus = document.getElementById('toolStatus');
       const previewWrap = document.getElementById('previewWrap');
       const refineWrap = document.getElementById('refineWrap');
@@ -1415,7 +1421,6 @@
 
       // ── Drop / browse ────────────────────────────────────────────────────────
       browseBtn.addEventListener('click', () => fileInput.click());
-      csvBrowseBtn.addEventListener('click', () => csvInput.click());
       fileInput.addEventListener(
         'change',
         (e) => e.target.files[0] && handleFile(e.target.files[0]),
